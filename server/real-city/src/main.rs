@@ -1,54 +1,28 @@
-use rocket::serde::{Serialize};
-
-#[macro_use] extern crate rocket;
-
-#[derive(Serialize)]
-#[serde(crate = "rocket::serde")]
-struct RoadsDTO {
-    roads: Vec<Road>
-}
-
-#[derive(Serialize)]
-#[serde(crate = "rocket::serde")]
-struct Road {
-    nodes: Vec<Node>
-}
-
-#[derive(Serialize)]
-#[serde(crate = "rocket::serde")]
-struct Node {
-    lat: f64,
-    lon: f64,
-}
-
-#[get("/roads", format = "application/json")]
-fn roads() -> String {
-    let roads = vec![
-        Road {
-            nodes: vec![
-                Node { lat: 0.0, lon: 0.0 },
-                Node { lat: 1.0, lon: 1.0 },
-            ]
-        },
-        Road {
-            nodes: vec![
-                Node { lat: 2.0, lon: 2.0 },
-                Node { lat: 3.0, lon: 3.0 },
-            ]
-        },
-    ];
-    return serde_json::to_string(&roads).unwrap();
-}
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 
 #[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
+async fn hello() -> impl Responder {
+    HttpResponse::Ok().body("Hello world!")
 }
 
-#[launch]
-fn rocket() -> _ {
-    rocket::build().mount("/", routes![
-        index, 
-        roads
-        ])
+#[post("/echo")]
+async fn echo(req_body: String) -> impl Responder {
+    HttpResponse::Ok().body(req_body)
+}
+
+async fn manual_hello() -> impl Responder {
+    HttpResponse::Ok().body("Hey there!")
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .service(hello)
+            .service(echo)
+            .route("/hey", web::get().to(manual_hello))
+    })
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
 }
