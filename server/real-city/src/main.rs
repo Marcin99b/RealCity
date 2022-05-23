@@ -1,26 +1,23 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+mod api;
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
+use api::route::{
+    getRoute
+};
 
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
-}
+use actix_web::{HttpServer, App, web::Data, middleware::Logger};
 
-async fn manual_hello() -> impl Responder {
-    HttpResponse::Ok().body("Hey there!")
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    std::env::set_var("RUST_LOG", "debug");
+    std::env::set_var("RUST_BACKTRACE", "1");
+    env_logger::init();
+
+    HttpServer::new(move || {
+        let logger = Logger::default();
         App::new()
-            .service(hello)
-            .service(echo)
-            .route("/hey", web::get().to(manual_hello))
+        .wrap(logger)
+        .service(getRoute)
     })
     .bind(("127.0.0.1", 8080))?
     .run()
